@@ -1,0 +1,5 @@
+.git
+build
+deployments
+docs
+**/*_test.go

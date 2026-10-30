@@ -1,0 +1,75 @@
+package postflight
+
+import (
+	"github.com/airbnb/rudolph/pkg/request"
+	"log"
+	"net/http"
+
+	"github.com/airbnb/rudolph/pkg/clock"
+	"github.com/airbnb/rudolph/pkg/response"
+	"github.com/airbnb/rudolph/pkg/store"
+)
+
+// PostflightHandler is the entry point for the /postflight API call
+type PostPostflightHandler struct {
+	booted           bool
+	ruleDestroyer    staleRuleDestroyer
+	syncStateUpdater syncStateUpdater
+}
+
+func (h *PostPostflightHandler) Boot() (err error) {
+	if h.booted {
+		return
+	}
+
+	client, err := store.FromEnv()
+	if err != nil {
+		return err
+	}
+
+	h.ruleDestroyer = concreteRuleDestroyer{
+		queryer: client,
+		deleter: client,
+	}
+	h.syncStateUpdater = concreteSyncStateUpdater{
+		timeProvider: clock.ConcreteTimeProvider{},
+		updater:      client,
+	}
+
+	h.booted = true
+	return
+}
+
+func (h *PostPostflightHandler) Handles(request request.APIRequest) bool {
+	return request.Resource == "/postflight/{machine_id}" && request.HTTPMethod == "POST"
+}
+
+func (h *PostPostflightHandler) Handle(request request.APIRequest) (*response.ProxyResponse, error) {
+	machineID, _, errResponse, err := parseRequest(request)
+	if errResponse != nil {
+		return errResponse, nil
+	}
+	if err != nil {
+		// Unreachable code; API Gateway should never encounter an error attempting to GetMachineID
+		return errResponse, err
+	}
+
+	// FIXME (derek.wang) This postflight is not properly setting the FeedSyncCursor; it's just setting it to
+	// like "10 minutes ago and leaving it like that. Pretty dumb, derek!"
+	err = h.syncStateUpdater.updatePostflightDate(machineID)
+	if err != nil {
+		log.Printf("Failed to set final PostflightAt")
+		return response.APIResponse(http.StatusInternalServerError, err)
+	}
+
+	// Delete rules marked for deletion
+	err = h.ruleDestroyer.destroyMachineRulesMarkedForDeletion(machineID)
+	if err != nil {
+		return response.APIResponse(http.StatusInternalServerError, err)
+	}
+
+	// Optional: Archive the sync state
+	// _ = archiveSyncState(h.dynamodbClient, machineID)
+
+	return response.APIResponse(http.StatusOK, map[string]string{"status": "ok"})
+}
