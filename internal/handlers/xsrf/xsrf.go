@@ -21,7 +21,7 @@ func (h *PostXSRFHandler) Handles(request request.APIRequest) bool {
 }
 
 func (h *PostXSRFHandler) Handle(request request.APIRequest) (*response.ProxyResponse, error) {
-	log.Printf("XSRFHandler request:\n%+v\n", request)
+	log.Printf("XSRFHandler request: %s %s", request.HTTPMethod, request.Resource)
 
 	// FIXME (derek.wang) just returning stub for now
 	return response.APIResponse(http.StatusOK, map[string]string{"status": "ok"})

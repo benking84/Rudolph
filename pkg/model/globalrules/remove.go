@@ -36,8 +36,12 @@ func RemoveGlobalRule(
 
 	// In order to get non-clean sync clients to pick up the new rule diff, add it to the feed as a "remove"
 	// Subsequent non-clean syncs will use the feed cursor to cross the date
-	feedrule := feedrules.ConstructFeedRuleFromBaseRule(timeProvider, rule.SantaRule)
-	feedrule.Policy = types.Remove
+	removedRule := rule.SantaRule
+	removedRule.Policy = types.Remove
+	feedrule := feedrules.ConstructFeedRuleFromBaseRule(timeProvider, removedRule)
+	if feedrule == nil {
+		return fmt.Errorf("failed to construct feed rule for removal of sk (%s)", ruleSortKey)
+	}
 	txnPutItem, err := transacter.CreateTransactPutItem(feedrule)
 	if err != nil {
 		return fmt.Errorf("failed to create txn item to add removal to feed: %w", err)

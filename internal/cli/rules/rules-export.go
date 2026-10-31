@@ -84,7 +84,7 @@ func runJsonExport(client store.QueryAPI, filename string) (err error) {
 	if err != nil {
 		return
 	}
-	err = os.WriteFile(filename, jsondata, 0644)
+	err = os.WriteFile(filename, jsondata, 0600)
 	if err != nil {
 		return
 	}
@@ -101,7 +101,7 @@ func runCsvExport(
 	csvRules := make(chan []string)
 
 	header := []string{
-		"sha256",
+		"identifier",
 		"type",
 		"policy",
 		"custom_msg",

@@ -41,7 +41,14 @@ resource "google_storage_bucket" "events" {
 resource "google_storage_bucket_iam_member" "pubsub_writer" {
   count  = var.enable_event_export ? 1 : 0
   bucket = google_storage_bucket.events[0].name
-  role   = "roles/storage.admin"
+  role   = "roles/storage.objectCreator"
+  member = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
+}
+
+resource "google_storage_bucket_iam_member" "pubsub_bucket_reader" {
+  count  = var.enable_event_export ? 1 : 0
+  bucket = google_storage_bucket.events[0].name
+  role   = "roles/storage.legacyBucketReader"
   member = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-pubsub.iam.gserviceaccount.com"
 }
 
@@ -63,6 +70,7 @@ resource "google_pubsub_subscription" "events_gcs" {
 
   depends_on = [
     google_storage_bucket_iam_member.pubsub_writer,
+    google_storage_bucket_iam_member.pubsub_bucket_reader,
     google_kms_crypto_key_iam_member.pubsub,
   ]
 }

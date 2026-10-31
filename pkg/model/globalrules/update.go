@@ -1,6 +1,7 @@
 package globalrules
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/airbnb/rudolph/pkg/clock"
@@ -39,6 +40,9 @@ func UpdateGlobalRule(
 	}
 
 	updateFeedRuleItem := feedrules.ConstructFeedRuleFromBaseRule(time, updatedRule)
+	if updateFeedRuleItem == nil {
+		return errors.New("provided global rule update is not valid")
+	}
 
 	// Create the Update the rule by creating a TransactUpdateItem
 	updateItem1, err := client.CreateTransactUpdateItem(primaryKey, updateItem)

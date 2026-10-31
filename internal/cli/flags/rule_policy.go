@@ -41,11 +41,11 @@ func (r *RuleUpdateFlags) AddRuleUpdateFlags(cmd *cobra.Command) {
 // rulePolicy is a custom type for use as a CLI flag representing the type of rule policy being applied
 type RulePolicy types.Policy
 
-func newRulePolicyValue(val string, p *RuleType) *RuleType {
+func newRulePolicyValue(val string, p *RulePolicy) *RulePolicy {
 	err := p.Set(val)
 	if err != nil {
 		fmt.Println(`Warning: invalid default value for rule policy, using "allowlist"`)
-		*p = RuleType(types.Allowlist)
+		*p = RulePolicy(types.Allowlist)
 	}
 
 	return p
@@ -84,7 +84,7 @@ func (i *RulePolicy) String() string {
 	case types.Blocklist:
 		return blocklist
 	case types.SilentBlocklist:
-		return blocklist
+		return silentBlocklist
 	case types.Remove:
 		return remove
 	}

@@ -83,6 +83,8 @@ type concreteRuledownloadCursorService struct {
 	getter  store.GetItemAPI
 }
 
+const maxRuleDownloadBatchSize = 500
+
 // ConstructCursor takes the given ruledownload request and constructs a cursor object. This cursor is sent to
 // the ruledownload services for processing.
 //
@@ -101,6 +103,10 @@ func (c concreteRuledownloadCursorService) ConstructCursor(ruledownloadRequest R
 		syncState, eerr := syncstate.GetByMachineID(c.getter, machineID)
 		if eerr != nil {
 			err = fmt.Errorf("failed to get previous syncstate: %w", eerr)
+			return
+		}
+		if syncState == nil {
+			err = fmt.Errorf("no syncstate found for machine %q", machineID)
 			return
 		}
 
@@ -130,6 +136,26 @@ func (c concreteRuledownloadCursorService) ConstructCursor(ruledownloadRequest R
 
 	} else {
 		cursor = *ruledownloadRequest.Cursor
+		if cursor.BatchSize < 0 || cursor.BatchSize > maxRuleDownloadBatchSize {
+			err = fmt.Errorf("invalid cursor batch_size: %d", cursor.BatchSize)
+			return
+		}
+		switch cursor.Strategy {
+		case ruledownloadStrategyClean:
+			if cursor.PartitionKey != "" && cursor.PartitionKey != "GlobalRules" {
+				err = fmt.Errorf("invalid cursor partition key %q for clean sync", cursor.PartitionKey)
+				return
+			}
+		case ruledownloadStrategyIncremental:
+			if cursor.PartitionKey != "" && cursor.PartitionKey != "RulesFeed" {
+				err = fmt.Errorf("invalid cursor partition key %q for incremental sync", cursor.PartitionKey)
+				return
+			}
+		case ruledownloadStrategyMachine:
+		default:
+			err = fmt.Errorf("invalid cursor strategy: %d", cursor.Strategy)
+			return
+		}
 	}
 	return
 }

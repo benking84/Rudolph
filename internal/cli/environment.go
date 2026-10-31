@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -46,6 +47,9 @@ func retrieveConfig(cmd *cobra.Command) (*environmentConfiguration, error) {
 
 	if env == "" {
 		return nil, errors.New("missing ENV variable")
+	}
+	if strings.ContainsAny(env, `/\`) || strings.Contains(env, "..") {
+		return nil, errors.New("invalid ENV variable")
 	}
 
 	// Check to see if this is running under the git repo root source

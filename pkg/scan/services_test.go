@@ -57,6 +57,7 @@ func Test_ScanService(t *testing.T) {
 	err := service.ScanAll(store.ScanInput{Limit: 1}, func(out *store.ScanOutput) error { return nil }, func(out *store.ScanOutput) (bool, error) {
 		return false, nil
 	})
+	assert.NoError(t, err)
 	// Count pages by scanning again with a counter.
 	numItems := 0
 	err = service.ScanAll(store.ScanInput{Limit: 1}, func(out *store.ScanOutput) error {

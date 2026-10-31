@@ -2,11 +2,12 @@ package eventupload
 
 import (
 	"context"
-	"github.com/airbnb/rudolph/pkg/request"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/airbnb/rudolph/pkg/eventsink"
+	"github.com/airbnb/rudolph/pkg/request"
 	"github.com/airbnb/rudolph/pkg/response"
 )
 
@@ -49,7 +50,9 @@ func (h *PostEventuploadHandler) Handle(request request.APIRequest) (*response.P
 	}
 
 	forwarded := convertRequestEventsToUploadEvents(machineID, eventsRequest.Events)
-	if err = h.publisher.Publish(context.Background(), machineID, forwarded); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err = h.publisher.Publish(ctx, machineID, forwarded); err != nil {
 		return response.APIResponse(http.StatusInternalServerError, response.ErrInternalServerErrorResponse)
 	}
 	return response.APIResponse(http.StatusOK, map[string]string{"status": "ok"})

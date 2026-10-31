@@ -74,10 +74,15 @@ func TestGetPaginatedGlobalRules(t *testing.T) {
 				if err != nil {
 					return nil, err
 				}
+				effectiveID := rule.Identifier
+				if effectiveID == "" {
+					effectiveID = rule.SHA256
+				}
 				items[i] = store.Item{
 					"PK":         globalRulesPK,
-					"SK":         globalRulesSK(rule.Identifier, rule.RuleType),
+					"SK":         globalRulesSK(effectiveID, rule.RuleType),
 					"Identifier": rule.Identifier,
+					"SHA256":     rule.SHA256,
 					"RuleType":   ruleType,
 					"Policy":     policy,
 				}
@@ -102,9 +107,13 @@ func TestGetPaginatedGlobalRules(t *testing.T) {
 	}
 
 	for i, globalRule := range globalRules {
+		expectedIdentifier := rules[i].Identifier
+		if expectedIdentifier == "" {
+			expectedIdentifier = rules[i].SHA256
+		}
 		assert.Equal(t, globalRulesPK, globalRule.PrimaryKey.PartitionKey)
-		assert.Equal(t, globalRulesSK(rules[i].Identifier, rules[i].RuleType), globalRule.PrimaryKey.SortKey)
-		assert.Equal(t, rules[i].Identifier, globalRule.SantaRule.Identifier)
+		assert.Equal(t, globalRulesSK(expectedIdentifier, rules[i].RuleType), globalRule.PrimaryKey.SortKey)
+		assert.Equal(t, expectedIdentifier, globalRule.SantaRule.Identifier)
 		assert.Equal(t, rules[i].RuleType, globalRule.RuleType)
 		assert.Equal(t, rules[i].Policy, globalRule.SantaRule.Policy)
 	}

@@ -17,9 +17,10 @@ resource "google_project_iam_member" "api_firestore" {
   member  = "serviceAccount:${google_service_account.api.email}"
 }
 
-resource "google_project_iam_member" "api_pubsub" {
+resource "google_pubsub_topic_iam_member" "api_pubsub" {
   count   = var.enable_event_export ? 1 : 0
   project = var.project_id
+  topic   = google_pubsub_topic.events[0].name
   role    = "roles/pubsub.publisher"
   member  = "serviceAccount:${google_service_account.api.email}"
 }

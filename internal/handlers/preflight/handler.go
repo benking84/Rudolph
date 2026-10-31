@@ -97,6 +97,7 @@ func (h *PostPreflightHandler) handlePreflight(machineID string, preflightReques
 	// or if the machine is new
 	switch preflightRequest.RequestCleanSync {
 	case true:
+		feedSyncCursor, _ = h.stateTrackingService.getFeedSyncStateCursor(prevSyncState)
 		performCleanSync = true
 	case false:
 		// Retrieve the current feed sync cursor
@@ -112,7 +113,7 @@ func (h *PostPreflightHandler) handlePreflight(machineID string, preflightReques
 			prevSyncState,
 		)
 		if err != nil {
-			return response.APIResponse(http.StatusInternalServerError, err)
+			return response.APIResponse(http.StatusInternalServerError, response.ErrInternalServerErrorResponse)
 		}
 	default:
 		performCleanSync = true
@@ -140,7 +141,7 @@ func (h *PostPreflightHandler) handlePreflight(machineID string, preflightReques
 
 	if err != nil {
 		err = fmt.Errorf("encountered error trying to save new sync state: %w", err)
-		return response.APIResponse(http.StatusInternalServerError, err)
+		return response.APIResponse(http.StatusInternalServerError, response.ErrInternalServerErrorResponse)
 	}
 
 	// Construct the response

@@ -40,5 +40,12 @@ func GetMachineRules(client store.QueryAPI, machineID string) (items *[]MachineR
 		err = fmt.Errorf("failed to unmarshal machine rules: %w", err)
 		return
 	}
+	if items != nil {
+		for i := range *items {
+			if (*items)[i].SHA256 != "" && (*items)[i].Identifier == "" {
+				(*items)[i].Identifier = (*items)[i].SHA256
+			}
+		}
+	}
 	return
 }

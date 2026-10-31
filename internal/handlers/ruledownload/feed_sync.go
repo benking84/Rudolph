@@ -50,7 +50,7 @@ func (d concreteFeedRuleDownloader) handle(machineID string, cursor ruledownload
 	feedRules, lastEvaluatedKey, err := feedrules.GetPaginatedFeedRules(d.queryer, cursor.BatchSize, ddbCursor)
 	if err != nil {
 		log.Printf("  GetPaginatedFeedRules Error %s", err.Error())
-		return response.APIResponse(http.StatusInternalServerError, err)
+		return response.APIResponse(http.StatusInternalServerError, response.ErrInternalServerErrorResponse)
 	}
 
 	log.Printf("  lastEvaluatedKey %s", lastEvaluatedKey)
@@ -74,7 +74,7 @@ func (d concreteFeedRuleDownloader) handle(machineID string, cursor ruledownload
 	jsonCursor, err := json.Marshal(nextCursor)
 	if err != nil {
 		log.Printf("  json.Marshal Error %s", err.Error())
-		return response.APIResponse(http.StatusInternalServerError, err)
+		return response.APIResponse(http.StatusInternalServerError, response.ErrInternalServerErrorResponse)
 	}
 
 	return response.APIResponse(

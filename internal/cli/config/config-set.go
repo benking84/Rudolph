@@ -142,7 +142,7 @@ func applyConfig(
 	// Read confirmation
 	reader := bufio.NewReader(os.Stdin)
 	text, _ := reader.ReadString('\n')
-	text = strings.Replace(text, "\n", "", -1)
+	text = strings.ToLower(strings.TrimSpace(text))
 	if text == "ok" || text == "yes" {
 		fmt.Println("Sending the configuration to DynamoDB...")
 	} else {

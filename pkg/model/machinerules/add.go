@@ -75,6 +75,22 @@ func ruleValidation(
 		return false, err
 	}
 
+	// Identifier validation based on RuleType
+	switch ruleType {
+	case types.Binary, types.Certificate:
+		if !rules.ValidSha256(identifier) {
+			return false, errors.New("identifier is not a valid sha256")
+		}
+	case types.TeamID:
+		if !rules.ValidTeamID(identifier) {
+			return false, errors.New("identifier is not a valid TeamID")
+		}
+	case types.SigningID:
+		if !rules.ValidSigningID(identifier) {
+			return false, errors.New("identifier is not a valid SigningID")
+		}
+	}
+
 	// RulePolicy validation
 	_, err = policy.MarshalText()
 	if err != nil {
@@ -82,7 +98,7 @@ func ruleValidation(
 	}
 
 	// Expires validation - must be a positive time period
-	if expires.IsZero() {
+	if expires.IsZero() || expires.Unix() <= 0 {
 		err = errors.New("expires time is not a positive time")
 		return false, err
 	}

@@ -174,7 +174,10 @@ func runCsvImport(
 	// Start taking lines from the csv and shoveling them into the workers
 	for line := range data {
 		identifier, ok := line["identifier"]
-		if !ok {
+		if !ok || identifier == "" {
+			identifier, ok = line["sha256"]
+		}
+		if !ok || identifier == "" {
 			panic("no identifier")
 		}
 		ruleTypeStr, ok := line["type"]

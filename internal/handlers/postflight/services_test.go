@@ -54,19 +54,26 @@ var _ store.QueryAPI = mockQueryer(nil)
 var _ store.DeleteItemAPI = mockDeleter(nil)
 
 func Test_RuleDeleter_OK(t *testing.T) {
+	deleteCalled := false
 	destroyer := concreteRuleDestroyer{
 		queryer: mockQueryer(
 			func(input *store.QueryInput) (*store.QueryOutput, error) {
 				assert.Equal(t, "MachineRules#AAAA-BBBB-CCCC", input.PartitionKey)
 				assert.Equal(t, true, input.Filters["DeleteOnNextSync"])
 				assert.Equal(t, []string{"PK", "SK"}, input.Projection)
-				return &store.QueryOutput{}, nil
+				return &store.QueryOutput{
+					Items: []store.Item{
+						{"PK": "MachineRules#AAAA-BBBB-CCCC", "SK": "Binary#deadbeef"},
+					},
+					Count: 1,
+				}, nil
 			},
 		),
 		deleter: mockDeleter(
 			func(key store.PrimaryKey) (*store.DeleteItemOutput, error) {
-				assert.Equal(t, "Machine#AAAA-BBBB-CCCC", key.PartitionKey)
-				assert.Equal(t, "SyncState", key.SortKey)
+				deleteCalled = true
+				assert.Equal(t, "MachineRules#AAAA-BBBB-CCCC", key.PartitionKey)
+				assert.Equal(t, "Binary#deadbeef", key.SortKey)
 
 				return &store.DeleteItemOutput{}, nil
 			},
@@ -75,4 +82,5 @@ func Test_RuleDeleter_OK(t *testing.T) {
 
 	err := destroyer.destroyMachineRulesMarkedForDeletion("AAAA-BBBB-CCCC")
 	assert.Empty(t, err)
+	assert.True(t, deleteCalled)
 }

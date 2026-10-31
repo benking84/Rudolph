@@ -30,7 +30,7 @@ deps:
 	go mod tidy
 
 build: deps
-	@sh -c "'$(CURDIR)/scripts/build.sh'"
+	@"$(CURDIR)/scripts/build.sh"
 
 image:
 	docker build -t $(IMAGE) .
@@ -39,6 +39,6 @@ test:
 	go test ./...
 
 init-env: .check-args
-	@sh -c "'$(CURDIR)/scripts/new_env.sh' $(ENV)"
+	@"$(CURDIR)/scripts/new_env.sh" "$(ENV)"
 
 .PHONY: .check-args deploy tf-init plan validate destroy deps build image test init-env

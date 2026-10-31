@@ -171,6 +171,7 @@ func (c ConcreteGlobalConfigurationSetter) setGlobalConfig(config MachineConfigu
 	_, err := c.setter.PutItem(globalConfigRow)
 	if err != nil {
 		log.Print(fmt.Errorf("setting global config failed: %w", err))
+		return err
 	}
 
 	// Attempt to set the new global configuration into cache
@@ -209,6 +210,7 @@ func (c ConcreteMachineConfigurationSetter) setMachineConfig(machineID string, c
 	_, err := c.setter.PutItem(machineConfigRow)
 	if err != nil {
 		log.Print(fmt.Errorf("setting machine config failed: %w", err))
+		return err
 	}
 	return nil
 }

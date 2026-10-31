@@ -25,6 +25,7 @@ func ParseCsvFile(filepath string) (output chan map[string]string, err error) {
 	reader := csv.NewReader(f)
 	header, err := reader.Read()
 	if err != nil {
+		f.Close()
 		err = fmt.Errorf("failed to read csv file: %s: %w", filepath, err)
 		return
 	}
@@ -79,6 +80,7 @@ func WriteCsvFile(
 
 	err = csvWriter.Write(headers)
 	if err != nil {
+		f.Close()
 		err = fmt.Errorf("could not write csv header: %w", err)
 		return
 	}
@@ -91,9 +93,8 @@ func WriteCsvFile(
 		defer csvWriter.Flush()
 
 		for record := range input {
-			err = csvWriter.Write(record)
-			if err != nil {
-				err = fmt.Errorf("could not write csv line: %w", err)
+			if writeErr := csvWriter.Write(record); writeErr != nil {
+				fmt.Printf("[ERROR] could not write csv line: %v\n", writeErr)
 				return
 			}
 		}

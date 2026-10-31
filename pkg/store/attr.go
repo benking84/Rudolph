@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"time"
@@ -294,8 +295,8 @@ func unmarshalValue(raw interface{}, fv reflect.Value) error {
 		if err != nil {
 			return err
 		}
-		if n < 0 {
-			return fmt.Errorf("negative value for unsigned field")
+		if n < 0 || fv.OverflowUint(uint64(n)) {
+			return fmt.Errorf("unsigned integer overflow or negative value")
 		}
 		fv.SetUint(uint64(n))
 		return nil
@@ -372,10 +373,20 @@ func asInt64(raw interface{}) (int64, error) {
 	case int64:
 		return n, nil
 	case uint:
+		if uint64(n) > math.MaxInt64 {
+			return 0, fmt.Errorf("integer overflow: %d", n)
+		}
+		return int64(n), nil
+	case uint8:
+		return int64(n), nil
+	case uint16:
 		return int64(n), nil
 	case uint32:
 		return int64(n), nil
 	case uint64:
+		if n > math.MaxInt64 {
+			return 0, fmt.Errorf("integer overflow: %d", n)
+		}
 		return int64(n), nil
 	case float32:
 		return int64(n), nil

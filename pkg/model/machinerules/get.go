@@ -31,6 +31,10 @@ func getItemAsMachineRule(client store.GetItemAPI, partitionKey string, sortKey 
 		return
 	}
 
+	if rule != nil && rule.SHA256 != "" && rule.Identifier == "" {
+		rule.Identifier = rule.SHA256
+	}
+
 	return
 }
 
