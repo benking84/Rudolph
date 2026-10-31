@@ -1,6 +1,7 @@
 package machineconfiguration
 
 import (
+	"sync"
 	"time"
 
 	"github.com/airbnb/rudolph/pkg/clock"
@@ -22,6 +23,7 @@ type Cache interface {
 }
 
 type ConcreteCache struct {
+	mu            sync.RWMutex
 	clock         clock.TimeProvider
 	rules         map[string]concreteCacheEntry
 	cacheDuration time.Duration
@@ -33,7 +35,9 @@ type concreteCacheEntry struct {
 }
 
 func (c *ConcreteCache) Has(key string) bool {
+	c.mu.RLock()
 	entry, ok := c.rules[key]
+	c.mu.RUnlock()
 	if !ok {
 		return false
 	}
@@ -42,7 +46,9 @@ func (c *ConcreteCache) Has(key string) bool {
 }
 
 func (c *ConcreteCache) Get(key string) *MachineConfiguration {
+	c.mu.RLock()
 	entry, ok := c.rules[key]
+	c.mu.RUnlock()
 	if !ok {
 		return nil
 	}
@@ -54,7 +60,9 @@ func (c *ConcreteCache) Set(key string, config *MachineConfiguration) bool {
 		item:    config,
 		expires: c.clock.Now().UTC().Add(c.cacheDuration),
 	}
+	c.mu.Lock()
 	c.rules[key] = entry
+	c.mu.Unlock()
 
 	return true
 }

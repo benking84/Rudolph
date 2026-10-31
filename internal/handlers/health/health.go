@@ -1,10 +1,11 @@
 package health
 
 import (
-	"github.com/airbnb/rudolph/pkg/request"
+	"log"
 	"net/http"
 
 	"github.com/airbnb/rudolph/pkg/model/globalrules"
+	"github.com/airbnb/rudolph/pkg/request"
 	"github.com/airbnb/rudolph/pkg/response"
 	"github.com/airbnb/rudolph/pkg/store"
 )
@@ -43,9 +44,9 @@ func (h GetHealthHandler) healthHandler(request request.APIRequest) (*response.P
 	// our system can be considered "healthy"
 	err := globalrules.PingDatabase(h.dynamodbClient)
 	if err != nil {
+		log.Printf("health check failed: %v", err)
 		return response.APIResponse(http.StatusInternalServerError, map[string]string{
 			"status": "unhealthy",
-			"error":  err.Error(),
 		})
 	}
 

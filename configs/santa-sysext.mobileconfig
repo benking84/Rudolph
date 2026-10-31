@@ -6,7 +6,7 @@
 	<array>
 		<dict>
 			<key>AllowUserOverrides</key>
-			<true/>
+			<false/>
 			<key>AllowedTeamIdentifiers</key>
 			<array>
 			  <string>EQHXZ8M8AV</string>
@@ -40,7 +40,7 @@
 	<key>PayloadOrganization</key>
 	<string>Acme Inc.</string>
 	<key>PayloadRemovalDisallowed</key>
-	<false/>
+	<true/>
 	<key>PayloadScope</key>
 	<string>System</string>
 	<key>PayloadType</key>

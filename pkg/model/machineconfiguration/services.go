@@ -26,12 +26,41 @@ type ConcreteMachineConfigurationService struct {
 }
 
 func GetMachineConfigurationService(dynamodb store.Client, timeProvider clock.TimeProvider) MachineConfigurationService {
+	cache := GetCache(timeProvider)
+	fetcher := ConcreteConfigurationFetcher{
+		global: CachedConcreteGlobalConfigurationFetcher{
+			getter: dynamodb,
+			cache:  cache,
+		},
+		machine: ConcreteMachineConfigurationFetcher{
+			getter: dynamodb,
+		},
+		universal: ConcreteUniversalConfigurationProvider{},
+	}
 	return ConcreteMachineConfigurationService{
 		dynamodb: dynamodb,
-		fetcher:  GetConfigurationFetcher(dynamodb, timeProvider),
-		setter:   GetConfigurationSetter(dynamodb, timeProvider),
-		updater:  GetConfigurationUpdater(dynamodb, GetConfigurationFetcher(dynamodb, timeProvider), timeProvider),
-		deleter:  GetConfigurationDeleter(dynamodb),
+		fetcher:  fetcher,
+		setter: ConcreteConfigurationSetter{
+			global: ConcreteGlobalConfigurationSetter{
+				setter: dynamodb,
+				cache:  cache,
+			},
+			machine: ConcreteMachineConfigurationSetter{
+				setter: dynamodb,
+			},
+		},
+		updater: ConcreteConfigurationUpdater{
+			global: ConcreteGlobalConfigurationUpdater{
+				updater: dynamodb,
+				cache:   cache,
+				fetcher: fetcher,
+			},
+			machine: ConcreteMachineConfigurationUpdater{
+				updater: dynamodb,
+				fetcher: fetcher,
+			},
+		},
+		deleter: GetConfigurationDeleter(dynamodb),
 	}
 }
 

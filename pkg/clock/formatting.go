@@ -7,7 +7,7 @@ func Unixtimestamp(t time.Time) int64 {
 }
 
 func FromUnixtimestamp(i int64) time.Time {
-	return time.Unix(i, 0)
+	return time.Unix(i, 0).UTC()
 }
 
 func RFC3339(t time.Time) string {

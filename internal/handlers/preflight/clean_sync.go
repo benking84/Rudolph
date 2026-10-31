@@ -46,7 +46,13 @@ func (c concreteCleanSyncService) determineCleanSync(machineID string, preflight
 }
 
 func determineCleanSyncByRuleCount(preflightRequest *PreflightRequest) bool {
-	ruleCount := preflightRequest.BinaryRuleCount + preflightRequest.CertificateRuleCount + preflightRequest.CompilerRuleCount + preflightRequest.TransitiveRuleCount
+	ruleCount := preflightRequest.BinaryRuleCount +
+		preflightRequest.CertificateRuleCount +
+		preflightRequest.CompilerRuleCount +
+		preflightRequest.TransitiveRuleCount +
+		preflightRequest.CDHashRuleCount +
+		preflightRequest.TeamIDRuleCount +
+		preflightRequest.SigningIDRuleCount
 	return ruleCount == 0
 }
 

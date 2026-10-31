@@ -25,8 +25,10 @@ func parseRequest(request apirequest.APIRequest) (machineID string, parsedReques
 	if len(request.Body) > 0 {
 		// Parse the request
 		err = json.Unmarshal([]byte(request.Body), &parsedRequest)
-		if err != nil {
-			log.Printf("%s\n%s", err.Error(), "request body unmarshal was not successful")
+		if err != nil || parsedRequest == nil {
+			if err != nil {
+				log.Printf("%s\n%s", err.Error(), "request body unmarshal was not successful")
+			}
 			errorResponse, err = response.APIResponse(http.StatusBadRequest, response.ErrInvalidBodyResponse)
 			return
 		}

@@ -114,7 +114,7 @@ func Test_PostRuledownloadHandler_SendToCorrectHandler(t *testing.T) {
 			),
 		}
 
-		machineID := "AAAA-BBBB-CCCC-DDDD"
+		machineID := "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"
 		request := request.APIRequest{
 			HTTPMethod: "POST",
 			Resource:   "/ruledownload/{machine_id}",
@@ -133,7 +133,7 @@ func Test_PostRuledownloadHandler_SendToCorrectHandler(t *testing.T) {
 }
 
 func Test_PostRuledownloadHandler_CursorServiceReceivesCorrectRequest(t *testing.T) {
-	machineID := "AAAA-BBBB-CCCC-DDDD"
+	machineID := "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"
 	var called bool
 	handler := PostRuledownloadHandler{
 		cursorService: mockCursorService(

@@ -53,7 +53,8 @@ func init() {
 				TransactWrite: client,
 			}
 			ruleHandler.machineRuleUpdater = machinerules.ConcreteMachineRulesUpdater{
-				Updater: client,
+				Updater:      client,
+				TimeProvider: timeProvider,
 			}
 
 			return ruleHandler.updateRulePolicy(tf, rf, ru)
@@ -74,12 +75,11 @@ func (rh *ruleHandler) updateRulePolicy(tf flags.TargetFlags, rf flags.RuleInfoF
 	var description string
 	var identifier string
 
-	fileInfo, err := santa_sensor.RunSantaFileInfo(*rf.FilePath)
-	if err != nil {
-		return fmt.Errorf("encountered an error while attempting to get file information for %q", *rf.FilePath)
-	}
-
 	if *rf.FilePath != "" {
+		fileInfo, err := santa_sensor.RunSantaFileInfo(*rf.FilePath)
+		if err != nil {
+			return fmt.Errorf("encountered an error while attempting to get file information for %q", *rf.FilePath)
+		}
 		identifier = fileInfo.SHA256
 		description = fmt.Sprintf("%s from %s", fileInfo.Path, tf.SelfMachineID) // FIXME (derek.wang) tf.SelfMachineID is Not initialized.
 		switch ruleType {
@@ -212,7 +212,7 @@ func (rh *ruleHandler) updateRulePolicy(tf flags.TargetFlags, rf flags.RuleInfoF
 	// Read confirmation
 	reader := bufio.NewReader(os.Stdin)
 	text, _ := reader.ReadString('\n')
-	text = strings.Replace(text, "\n", "", -1)
+	text = strings.ToLower(strings.TrimSpace(text))
 	if text == "ok" || text == "yes" {
 		// Do rule update
 		if tf.IsGlobal {

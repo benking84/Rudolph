@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-var machineRegexp = regexp.MustCompile(`^[A-F0-9]{8}\-[A-F0-9]{4}\-[A-F0-9]{4}\-[A-F0-9]{4}\-[A-F0-9]{12}$`)
+var machineRegexp = regexp.MustCompile(`^[A-Fa-f0-9]{8}\-[A-Fa-f0-9]{4}\-[A-Fa-f0-9]{4}\-[A-Fa-f0-9]{4}\-[A-Fa-f0-9]{12}$`)
 
 // ValidateMachineID returns an error if a machineID is not a properly formatted UUID string
 func ValidateMachineID(machineID string) error {

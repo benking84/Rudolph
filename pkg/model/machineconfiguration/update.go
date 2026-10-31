@@ -32,6 +32,9 @@ func UpdateMachineConfigClientMode(client store.UpdateItemAPI, machineID string,
 
 // UpdateGlobalConfigClientMode updates a machineID specific ClientMode configuration to the DynamoDB table via an UpdateItem API call
 func UpdateGlobalConfigClientMode(client store.UpdateItemAPI, newClientMode types.ClientMode) error {
+	if !allowGlobalLockdown && newClientMode == types.Lockdown {
+		return errors.New("global lockdown configuration is disabled right now")
+	}
 	pk := store.PrimaryKey{
 		PartitionKey: globalConfigurationPK,
 		SortKey:      machineConfigurationSK(),
@@ -129,7 +132,7 @@ func (c ConcreteGlobalConfigurationUpdater) updateConfig(configRequest MachineCo
 	}
 
 	if configRequest.BlockedPathRegex != nil && strings.Compare(*configRequest.BlockedPathRegex, currentGlobalConfig.BlockedPathRegex) != 0 {
-		newGlobalConfig.AllowedPathRegex = *configRequest.BlockedPathRegex
+		newGlobalConfig.BlockedPathRegex = *configRequest.BlockedPathRegex
 		changed = true
 	}
 

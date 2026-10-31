@@ -39,15 +39,18 @@ func ConstructPreflightResponse(machineConfiguration machineconfiguration.Machin
 		syncType = types.SyncTypeNormal
 	}
 	return &PreflightResponse{
-		ClientMode:             machineConfiguration.ClientMode,
-		BlockedPathRegex:       machineConfiguration.BlockedPathRegex,
-		AllowedPathRegex:       machineConfiguration.AllowedPathRegex,
-		BatchSize:              machineConfiguration.BatchSize,
-		EnableBundles:          machineConfiguration.EnableBundles,
-		EnabledTransitiveRules: machineConfiguration.EnabledTransitiveRules,
-		UploadLogsURL:          machineConfiguration.UploadLogsURL,
-		FullSyncInterval:       machineConfiguration.FullSyncInterval,
-		SyncType:               syncType,
+		ClientMode:               machineConfiguration.ClientMode,
+		BlockedPathRegex:         machineConfiguration.BlockedPathRegex,
+		AllowedPathRegex:         machineConfiguration.AllowedPathRegex,
+		BatchSize:                machineConfiguration.BatchSize,
+		EnableBundles:            machineConfiguration.EnableBundles,
+		EnabledTransitiveRules:   machineConfiguration.EnabledTransitiveRules,
+		UploadLogsURL:            machineConfiguration.UploadLogsURL,
+		FullSyncInterval:         machineConfiguration.FullSyncInterval,
+		BlockUsbMount:            machineConfiguration.BlockUsbMount,
+		RemountUsbMode:           machineConfiguration.RemountUsbMode,
+		OverrideFileAccessAction: machineConfiguration.OverrideFileAccessAction,
+		SyncType:                 syncType,
 		// Notably, we do not grab the clean sync from the config
 	}
 }

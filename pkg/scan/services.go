@@ -1,6 +1,8 @@
 package scan
 
 import (
+	"fmt"
+
 	"github.com/airbnb/rudolph/pkg/store"
 )
 
@@ -52,7 +54,7 @@ func scanIterator(scanner store.ScanAPI, in *store.ScanInput, callback func(out 
 	}
 	pk, ok := primaryKey(out.LastEvaluatedKey)
 	if !ok {
-		return true, nil, nil
+		return true, nil, fmt.Errorf("scan: invalid LastEvaluatedKey: missing PK or SK")
 	}
 	return shouldStop, &pk, nil
 }

@@ -3,8 +3,10 @@ package request
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/airbnb/rudolph/pkg/response"
+	"github.com/airbnb/rudolph/pkg/types"
 	"github.com/google/uuid"
 )
 
@@ -19,8 +21,11 @@ type APIRequest struct {
 	Body           string
 }
 
-// IsValidUUID reports whether machineID is a UUID.
+// IsValidUUID reports whether machineID is a canonical 36-char UUID.
 func IsValidUUID(machineID string) bool {
+	if err := types.ValidateMachineID(machineID); err != nil {
+		return false
+	}
 	_, err := uuid.Parse(machineID)
 	return err == nil
 }
@@ -41,5 +46,6 @@ func GetMachineID(req APIRequest) (machineID string, errorResponse *response.Pro
 		return
 	}
 
+	machineID = strings.ToUpper(machineID)
 	return
 }

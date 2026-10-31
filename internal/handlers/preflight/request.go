@@ -22,7 +22,18 @@ func parseRequest(request request.APIRequest) (parsedRequest *PreflightRequest, 
 	}
 
 	err = json.Unmarshal([]byte(request.Body), &parsedRequest)
-	if err != nil {
+	if err != nil || parsedRequest == nil {
+		errorResponse, err = response.APIResponse(http.StatusBadRequest, response.ErrInvalidBodyResponse)
+		return
+	}
+
+	if parsedRequest.CertificateRuleCount < 0 ||
+		parsedRequest.BinaryRuleCount < 0 ||
+		parsedRequest.CompilerRuleCount < 0 ||
+		parsedRequest.TransitiveRuleCount < 0 ||
+		parsedRequest.CDHashRuleCount < 0 ||
+		parsedRequest.TeamIDRuleCount < 0 ||
+		parsedRequest.SigningIDRuleCount < 0 {
 		errorResponse, err = response.APIResponse(http.StatusBadRequest, response.ErrInvalidBodyResponse)
 		return
 	}

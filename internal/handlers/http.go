@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"compress/gzip"
+	"compress/zlib"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -11,8 +14,12 @@ import (
 	"github.com/airbnb/rudolph/pkg/response"
 )
 
+const maxRequestBodyBytes = 10 << 20 // 10 MiB
+
 // Boot initialises every handler once, before the process accepts traffic.
 func Boot() error {
+	bootMu.Lock()
+	defer bootMu.Unlock()
 	for _, h := range handlers {
 		if err := h.Boot(); err != nil {
 			return err
@@ -24,20 +31,10 @@ func Boot() error {
 // HTTPHandler serves the Santa sync API.
 func HTTPHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "invalid body", http.StatusBadRequest)
-			return
-		}
-		req := request.APIRequest{
-			HTTPMethod:     r.Method,
-			Path:           r.URL.Path,
-			Resource:       resourceFor(r.URL.Path),
-			PathParameters: pathParameters(r.URL.Path),
-			Headers:        flattenHeaders(r.Header),
-			Body:           string(body),
-		}
-		if os.Getenv("REQUIRE_CLIENT_CERT") == "true" && req.Resource != "/health" {
+		defer r.Body.Close()
+
+		resource := resourceFor(r.URL.Path)
+		if os.Getenv("REQUIRE_CLIENT_CERT") == "true" && resource != "/health" {
 			if !strings.EqualFold(r.Header.Get("X-Client-Cert-Chain-Verified"), "true") {
 				writeProxy(w, &response.ProxyResponse{
 					StatusCode: http.StatusUnauthorized,
@@ -46,6 +43,26 @@ func HTTPHandler() http.Handler {
 				})
 				return
 			}
+		}
+
+		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodyBytes)
+		body, err := readBoundedBody(r)
+		if err != nil {
+			var maxBytesErr *http.MaxBytesError
+			if errors.As(err, &maxBytesErr) {
+				http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+				return
+			}
+			http.Error(w, "invalid body", http.StatusBadRequest)
+			return
+		}
+		req := request.APIRequest{
+			HTTPMethod:     r.Method,
+			Path:           r.URL.Path,
+			Resource:       resource,
+			PathParameters: pathParameters(r.URL.Path),
+			Headers:        flattenHeaders(r.Header),
+			Body:           string(body),
 		}
 		resp, err := ApiRouter(req)
 		if err != nil {
@@ -57,6 +74,39 @@ func HTTPHandler() http.Handler {
 		}
 		writeProxy(w, resp)
 	})
+}
+
+func readBoundedBody(r *http.Request) ([]byte, error) {
+	encoding := strings.ToLower(strings.TrimSpace(r.Header.Get("Content-Encoding")))
+	var reader io.Reader = r.Body
+	switch encoding {
+	case "", "identity":
+	case "deflate", "zlib":
+		zr, err := zlib.NewReader(r.Body)
+		if err != nil {
+			return nil, err
+		}
+		defer zr.Close()
+		reader = io.LimitReader(zr, maxRequestBodyBytes+1)
+	case "gzip":
+		gr, err := gzip.NewReader(r.Body)
+		if err != nil {
+			return nil, err
+		}
+		defer gr.Close()
+		reader = io.LimitReader(gr, maxRequestBodyBytes+1)
+	default:
+		return nil, errors.New("unsupported content-encoding")
+	}
+
+	data, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > maxRequestBodyBytes {
+		return nil, &http.MaxBytesError{Limit: maxRequestBodyBytes}
+	}
+	return data, nil
 }
 
 func writeProxy(w http.ResponseWriter, resp *response.ProxyResponse) {
@@ -72,21 +122,23 @@ func writeProxy(w http.ResponseWriter, resp *response.ProxyResponse) {
 
 func resourceFor(path string) string {
 	path = strings.TrimSuffix(path, "/")
-	switch {
-	case path == "/health" || path == "":
-		if path == "/health" {
-			return "/health"
+	if path == "/health" {
+		return "/health"
+	}
+	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
+	if len(parts) == 2 && parts[1] != "" {
+		switch parts[0] {
+		case "preflight":
+			return "/preflight/{machine_id}"
+		case "eventupload":
+			return "/eventupload/{machine_id}"
+		case "ruledownload":
+			return "/ruledownload/{machine_id}"
+		case "postflight":
+			return "/postflight/{machine_id}"
+		case "xsrf":
+			return "/xsrf/{machine_id}"
 		}
-	case strings.HasPrefix(path, "/preflight/"):
-		return "/preflight/{machine_id}"
-	case strings.HasPrefix(path, "/eventupload/"):
-		return "/eventupload/{machine_id}"
-	case strings.HasPrefix(path, "/ruledownload/"):
-		return "/ruledownload/{machine_id}"
-	case strings.HasPrefix(path, "/postflight/"):
-		return "/postflight/{machine_id}"
-	case strings.HasPrefix(path, "/xsrf/"):
-		return "/xsrf/{machine_id}"
 	}
 	return path
 }

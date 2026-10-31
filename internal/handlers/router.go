@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/airbnb/rudolph/internal/handlers/eventupload"
 	"github.com/airbnb/rudolph/internal/handlers/health"
@@ -16,6 +17,7 @@ import (
 
 var (
 	handlers []HandlerInterface
+	bootMu   sync.Mutex
 )
 
 func init() {
@@ -45,7 +47,10 @@ func ApiRouter(request request.APIRequest) (*response.ProxyResponse, error) {
 func getResponse(request request.APIRequest) (*response.ProxyResponse, error) {
 	for _, h := range handlers {
 		if h.Handles(request) {
-			if h.Boot() != nil {
+			bootMu.Lock()
+			err := h.Boot()
+			bootMu.Unlock()
+			if err != nil {
 				return response.APIResponse(http.StatusInternalServerError, nil)
 			}
 			return h.Handle(request)

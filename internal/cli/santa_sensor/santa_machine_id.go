@@ -39,15 +39,22 @@ func GetMyMachineUUID() (machineUUID string, err error) {
 	// defer the closing of our xmlFile so that we can parse it later on
 	defer xmlFile.Close()
 
-	byteValue, _ := ioutil.ReadAll(xmlFile)
+	byteValue, err := ioutil.ReadAll(xmlFile)
+	if err != nil {
+		err = fmt.Errorf("could not read santa machine mapping plist: %w", err)
+		return
+	}
 
 	// we initialize our Users array
 	var doc santaPlistXMLDocument
 	// we unmarshal our byteArray which contains our
 	// xmlFiles content into 'users' which we defined above
-	xml.Unmarshal(byteValue, &doc)
+	if err = xml.Unmarshal(byteValue, &doc); err != nil {
+		err = fmt.Errorf("could not unmarshal santa machine mapping plist: %w", err)
+		return
+	}
 
-	if len(doc.Data.Keys) != 2 || len(doc.Data.Strings) != 2 {
+	if len(doc.Data.Keys) == 0 || len(doc.Data.Keys) != len(doc.Data.Strings) {
 		err = errors.New("Invalid XML parsed or something")
 		return
 	}

@@ -115,8 +115,8 @@ func applyPolicyForPath(timeProvider clock.TimeProvider, client store.Client, po
 	// Read confirmation
 	reader := bufio.NewReader(os.Stdin)
 	text, _ := reader.ReadString('\n')
-	text = strings.Replace(text, "\n", "", -1)
-	if strings.ToLower(text) == "ok" || strings.ToLower(text) == "yes" {
+	text = strings.ToLower(strings.TrimSpace(text))
+	if text == "ok" || text == "yes" {
 		// Do rule creation
 		if tf.IsGlobal {
 			err = globalrules.AddNewGlobalRule(timeProvider, client, identifier, ruleType, policy, description)

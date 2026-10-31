@@ -27,9 +27,10 @@ type ruleRemovalRequest struct {
 }
 
 type updateRulePolicyRequest struct {
-	Policy       types.Policy `dynamodbav:"Policy,omitempty"`
-	ExpiresAfter int64        `dynamodbav:"ExpiresAfter,omitempty"`
-	Description  string       `dynamodbav:"Description,omitempty"`
+	Policy           types.Policy `dynamodbav:"Policy,omitempty"`
+	ExpiresAfter     int64        `dynamodbav:"ExpiresAfter,omitempty"`
+	Description      string       `dynamodbav:"Description,omitempty"`
+	DeleteOnNextSync bool         `dynamodbav:"DeleteOnNextSync"`
 }
 
 func machineRulePK(machineID string) string {

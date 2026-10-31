@@ -62,19 +62,22 @@ func (h *PostRuledownloadHandler) Handles(request request.APIRequest) bool {
 	return request.Resource == "/ruledownload/{machine_id}" && request.HTTPMethod == "POST"
 }
 
-func (h *PostRuledownloadHandler) Handle(request request.APIRequest) (*response.ProxyResponse, error) {
-	machineID, ok := request.PathParameters["machine_id"]
-	if !ok {
-		// Unreachable code; API Gateway will never allow {machine_id} to be blank
-		log.Printf("ASSERTION FAILED: Received blank {machine_id}")
-		return response.APIResponse(http.StatusBadRequest, nil)
+func (h *PostRuledownloadHandler) Handle(req request.APIRequest) (*response.ProxyResponse, error) {
+	machineID, errResponse, err := request.GetMachineID(req)
+	if errResponse != nil {
+		return errResponse, nil
+	}
+	if err != nil {
+		return errResponse, err
 	}
 
 	// Parse the request
 	var ruledownloadRequest *RuledownloadRequest
-	err := json.Unmarshal([]byte(request.Body), &ruledownloadRequest)
-	if err != nil {
-		log.Printf("  Failed to unmarshall ruledownload request Error %s", err.Error())
+	err = json.Unmarshal([]byte(req.Body), &ruledownloadRequest)
+	if err != nil || ruledownloadRequest == nil {
+		if err != nil {
+			log.Printf("  Failed to unmarshall ruledownload request Error %s", err.Error())
+		}
 		return response.APIResponse(http.StatusBadRequest, response.ErrInvalidBodyResponse)
 	}
 

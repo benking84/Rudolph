@@ -53,7 +53,7 @@ func init() {
 func removeRule(globalRemover globalrules.RuleRemovalService, machineRuleRemover machinerules.RuleRemovalService, ruleName string, tf flags.TargetFlags) error {
 	// First, determine which machine to apply
 	var machineID string
-	if !tf.IsGlobal || tf.IsTargetSelf() {
+	if !tf.IsGlobal {
 		var err error
 		machineID, err = tf.GetMachineID()
 		if err != nil {
@@ -73,8 +73,8 @@ func removeRule(globalRemover globalrules.RuleRemovalService, machineRuleRemover
 	// Read confirmation
 	reader := bufio.NewReader(os.Stdin)
 	text, _ := reader.ReadString('\n')
-	text = strings.Replace(text, "\n", "", -1)
-	if strings.ToLower(text) == "ok" || strings.ToLower(text) == "yes" {
+	text = strings.ToLower(strings.TrimSpace(text))
+	if text == "ok" || text == "yes" {
 		// Do rule deletion
 		if !tf.IsGlobal {
 			machineID, err := tf.GetMachineID()

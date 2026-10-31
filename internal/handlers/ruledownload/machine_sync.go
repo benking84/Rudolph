@@ -10,6 +10,7 @@ import (
 	"github.com/airbnb/rudolph/pkg/model/syncstate"
 	"github.com/airbnb/rudolph/pkg/response"
 	"github.com/airbnb/rudolph/pkg/store"
+	"github.com/airbnb/rudolph/pkg/types"
 )
 
 // On the last page, we always re-send a copy of all machine-specific rules, regardless of whether the client has already received them or not.
@@ -37,7 +38,7 @@ func (d concreteMachineRuleDownloader) handle(machineID string, ruledownloadRequ
 
 	machineRules, err := machinerules.GetMachineRules(d.queryer, machineID)
 	if err != nil {
-		return response.APIResponse(http.StatusInternalServerError, err)
+		return response.APIResponse(http.StatusInternalServerError, response.ErrInternalServerErrorResponse)
 	}
 
 	// Note that this is the last page
@@ -47,13 +48,18 @@ func (d concreteMachineRuleDownloader) handle(machineID string, ruledownloadRequ
 		log.Printf("Encountered error UpdateItem:")
 		log.Print(err.Error())
 
-		return response.APIResponse(http.StatusInternalServerError, err)
+		return response.APIResponse(http.StatusInternalServerError, response.ErrInternalServerErrorResponse)
 	}
 	log.Printf("Updated RuledownloadFinishedAt")
 
+	nowUnix := d.timer.Now().UTC().Unix()
 	rules := make([]rules.SantaRule, len(*machineRules))
 	for i, rule := range *machineRules {
-		rules[i] = rule.SantaRule
+		santaRule := rule.SantaRule
+		if rule.ExpiresAfter > 0 && rule.ExpiresAfter <= nowUnix {
+			santaRule.Policy = types.Remove
+		}
+		rules[i] = santaRule
 	}
 
 	// The lack of a cursor in this response signals to the sensor that there is no more stuff to paginate over.

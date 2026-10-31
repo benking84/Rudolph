@@ -99,6 +99,7 @@ func (c *FirestoreClient) UpdateItem(key PrimaryKey, item interface{}) (*UpdateI
 	ref := c.doc(key.PartitionKey, key.SortKey)
 	ctx, cancel := c.withTimeout()
 	defer cancel()
+	var updated Item
 	err = c.client.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
 		snap, err := tx.Get(ref)
 		if status.Code(err) == codes.NotFound {
@@ -114,16 +115,13 @@ func (c *FirestoreClient) UpdateItem(key PrimaryKey, item interface{}) (*UpdateI
 		merged["PK"] = key.PartitionKey
 		merged["SK"] = key.SortKey
 		applyTTL(merged)
+		updated = cloneItem(merged)
 		return tx.Set(ref, map[string]interface{}(merged))
 	})
 	if err != nil {
 		return nil, err
 	}
-	snap, err := ref.Get(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("store: read after update %s/%s: %w", key.PartitionKey, key.SortKey, err)
-	}
-	return &UpdateItemOutput{Attributes: itemFromSnap(snap)}, nil
+	return &UpdateItemOutput{Attributes: updated}, nil
 }
 
 func (c *FirestoreClient) DeleteItem(key PrimaryKey) (*DeleteItemOutput, error) {
@@ -222,7 +220,7 @@ func (c *FirestoreClient) Scan(in *ScanInput) (*ScanOutput, error) {
 		Count:        int32(len(items)),
 		ScannedCount: int32(len(items)),
 	}
-	if in.Limit > 0 && len(items) == limit && len(items) > 0 {
+	if len(items) == limit && len(items) > 0 {
 		if pk, ok := primaryKeyFromItem(items[len(items)-1]); ok {
 			out.LastEvaluatedKey = Item{"PK": pk.PartitionKey, "SK": pk.SortKey}
 		}

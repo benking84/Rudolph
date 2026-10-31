@@ -11,6 +11,10 @@ if [ $# -eq 0 ]; then
 fi
 
 NEW_ENV="$1"
+if [[ ! "$NEW_ENV" =~ ^[a-zA-Z0-9_-]+$ ]] || [ "$NEW_ENV" = "example" ]; then
+  echo "invalid environment name: $NEW_ENV (must match ^[a-zA-Z0-9_-]+$ and not be 'example')" >&2
+  exit 1
+fi
 SRC="$DIR/deployments/environments/example"
 DEST="$DIR/deployments/environments/$NEW_ENV"
 

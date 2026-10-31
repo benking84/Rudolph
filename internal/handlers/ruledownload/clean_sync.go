@@ -27,7 +27,7 @@ func (d concreteGlobalRuleDownloader) handle(machineID string, cursor ruledownlo
 	globalRules, lastEvaluatedKey, err := globalrules.GetPaginatedGlobalRules(d.queryer, cursor.BatchSize, ddbCursor)
 	if err != nil {
 		log.Printf("  GetPaginatedGlobalRules Error %s", err.Error())
-		return response.APIResponse(http.StatusInternalServerError, err)
+		return response.APIResponse(http.StatusInternalServerError, response.ErrInternalServerErrorResponse)
 	}
 
 	log.Printf("  lastEvaluatedKey %s", lastEvaluatedKey)
@@ -50,7 +50,7 @@ func (d concreteGlobalRuleDownloader) handle(machineID string, cursor ruledownlo
 	jsonCursor, err := json.Marshal(nextCursor)
 	if err != nil {
 		log.Printf("  json.Marshal Error %s", err.Error())
-		return response.APIResponse(http.StatusInternalServerError, err)
+		return response.APIResponse(http.StatusInternalServerError, response.ErrInternalServerErrorResponse)
 	}
 
 	return response.APIResponse(

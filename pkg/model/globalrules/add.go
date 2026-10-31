@@ -41,6 +41,9 @@ func AddNewGlobalRule(
 	}
 
 	feedRule := feedrules.ConstructFeedRuleFromBaseRule(time, rule.SantaRule)
+	if feedRule == nil {
+		return errors.New("provided global rule is not valid")
+	}
 
 	putItem1, err := client.CreateTransactPutItem(rule)
 	if err != nil {
