@@ -36,9 +36,12 @@ image:
 	docker build -t $(IMAGE) .
 
 test:
-	go test ./...
+	go test -race ./...
+
+vulncheck:
+	go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
 init-env: .check-args
 	@"$(CURDIR)/scripts/new_env.sh" "$(ENV)"
 
-.PHONY: .check-args deploy tf-init plan validate destroy deps build image test init-env
+.PHONY: .check-args deploy tf-init plan validate destroy deps build image test vulncheck init-env
