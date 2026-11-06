@@ -4,7 +4,7 @@ go 1.27.3
 
 require (
 	cloud.google.com/go/firestore v1.29.2
-	cloud.google.com/go/pubsub v1.51.1
+	cloud.google.com/go/pubsub/v2 v2.6.0
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
@@ -19,7 +19,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.10.0 // indirect
 	cloud.google.com/go/iam v1.14.0 // indirect
 	cloud.google.com/go/longrunning v1.3.0 // indirect
-	cloud.google.com/go/pubsub/v2 v2.6.0 // indirect
+	cloud.google.com/go/pubsub v1.51.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
